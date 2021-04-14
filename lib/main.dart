@@ -48,6 +48,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final List<Transaction> _transactions = [];
+  bool _showChart = false;
 
   List<Transaction> get _recentTransactions {
     return _transactions.where((tr) {
@@ -78,6 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _openTransactionFormModal(BuildContext context) {
     showModalBottomSheet(
+        isScrollControlled: true,
         context: context,
         builder: (_) {
           return TransactionForm(_addTransaction);
@@ -86,38 +88,64 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQueryof = MediaQuery.of(context);
+    bool isLandscape = mediaQueryof.orientation == Orientation.landscape;
     final appBar = AppBar(
       title: Text(
         'Despesas Pessoais',
       ),
       actions: [
+        if (isLandscape)
+          IconButton(
+              icon: Icon(_showChart ? Icons.list : Icons.show_chart),
+              onPressed: () {
+                setState(() {
+                  _showChart = !_showChart;
+                });
+              }),
         IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => _openTransactionFormModal(context))
+          icon: Icon(Icons.add),
+          onPressed: () => _openTransactionFormModal(context),
+        ),
       ],
     );
-    final availableHeight = MediaQuery.of(context).size.height -
+    final availableHeight = mediaQueryof.size.height -
         appBar.preferredSize.height -
-        MediaQuery.of(context).padding.top;
+        mediaQueryof.padding.top;
     return Scaffold(
       appBar: appBar,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-                height: availableHeight * 0.27,
-                child: Chart(_recentTransactions)),
-            Column(
-              children: [
-                Container(
-                    height: availableHeight * 0.73,
-                    child: TransactionList(
-                      _transactions,
-                      _removeTransaction,
-                    )),
-              ],
-            )
+            // if (isLandscape)
+            //   Row(
+            //     mainAxisAlignment: MainAxisAlignment.center,
+            //     children: [
+            //       Text('Exibir gráfico'),
+            //       Switch(
+            //           value: _showChart,
+            //           onChanged: (value) {
+            //             setState(() {
+            //               _showChart = value;
+            //             });
+            //           }),
+            //     ],
+            //   ),
+            if (_showChart || !isLandscape)
+              Container(
+                height: availableHeight * (isLandscape ? 0.7 : 0.3),
+                child: Chart(
+                  _recentTransactions,
+                ),
+              ),
+            if (!_showChart || !isLandscape)
+              Container(
+                  height: availableHeight * (isLandscape ? 1 : 0.7),
+                  child: TransactionList(
+                    _transactions,
+                    _removeTransaction,
+                  ))
           ],
         ),
       ),
